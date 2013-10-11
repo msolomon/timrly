@@ -16,73 +16,114 @@ handler = (req, res) ->
             socket.on('nickname set', function(data) {
                 console.log(data);
             });
-            socket.on('error', function(data) {
-                console.log(data);
+            socket.on('update', function(data) {
+                console.log('update', data);
             });
-            socket.on('group set', function(data) {
+            socket.on('group joined', function(data) {
                 console.log(data);
             });
             socket.emit('set nickname', 'joe');
             socket.emit('set nickname', 'chet');
             socket.emit('set nickname', 'chet');
-            socket.emit('set group', 'g1');
-            socket.emit('set group', 'g2');
+            socket.emit('join group', 'g1');
+            socket.emit('join group', 'g2');
             </script>"
 
+uniqueId = (length=5) ->
+    id = ""
+    id += Math.random().toString(36).substr(2) while id.length < length
+    id.substr 0, length
 
-# attach socket.io to the server
-server = http.createServer handler
-io = socketio.listen server
+class User
+    constructor: (@socket) ->
+        @name = 'boring user'
 
+    setName: (name) ->
+        @name = name
 
-# Store users in memory
-users = {}
-addUser = (nickname, id) ->
-    if not users[nickname]
-        users[nickname] = id
-        true
-    else
-        false
+    getName: () ->
+        @name
 
-removeUser = (nickname) ->
-   users[nickname] = false 
-
-
-# Store groups in memory
-groups = {}
-joinGroup = (oldGroup, newGroup, id) ->
-    if oldGroup?
-        groups[oldGroup] = (x for x in groups[oldGroup] when x != id)
-    groups[newGroup] ?= []
-    groups[newGroup].push id
-
-getGroup = (group) ->
-    groups[group]
+    message: (title, contents) ->
+        @socket.emit title, contents
 
 
-pushHandler = (socket) ->
-    id = Math.random()
-    socket.set 'id', id
+class Group
+    constructor: (@name) ->
+        @users = []
+        @endTime = null
 
-    # set nickname
-    socket.on 'set nickname', (name) ->
-        socket.get 'nickname', (err, oldName) ->
-            if name and addUser name, id
-                if oldName and not err
-                    removeUser oldName
-                socket.set 'nickname', name, () ->
-                    socket.emit 'nickname set', users
-            else
-                socket.emit 'error', 'nickname ' + name + ' taken'
+    join: (user) ->
+        @users.push user
 
-    # set group
-    socket.on 'set group', (groupName) ->
-        # socket.get 'id', (err, id) ->
-        #     if err then console.log 'could not get id for socket', err
-        socket.get 'group', (err, oldGroup) ->
-            joinGroup oldGroup, groupName, id
-            socket.emit 'group set', getGroup groupName
+    leave: (user) ->
+        @users = (u for u in @users when u != user)
+
+    notify: (user) ->
+        'Update all clients with full state update'
+        info = @info(user)
+        user.message 'update', info for user in @users
+
+    info: (user) ->
+        {
+            group: @name,
+            user: user,
+            users: (u.getName() for u in @users),
+            end_time: @endTime
+        }
+
+    setEndTime: (endTime) ->
+        @endTime = endTime
+
+
+class RoomManager
+    constructor: () ->
+        @groups = {}
+        @usersToGroups = {}
+
+    joinGroup: (groupName, user) ->
+        'Leave previous group, if any, and join a new one'
+        old_group = @usersToGroups[user]
+        if old_group?
+            old_group.leave user
+
+        group = @groups[groupName] ? @groups[groupName] = new Group(groupName)
+        group.join user
+        @usersToGroups[user] = group
+        group
+
+    getGroup: (user) ->
+        @usersToGroups[user]
+
+
+pushHandlerFactory = (roomManager) ->
+    pushHandler = (socket) ->
+        user = new User(socket)
+        socket.set 'user', user
+        group = roomManager.joinGroup uniqueId(), user
+        group.notify user.getName()
+
+        # set nickname
+        socket.on 'set nickname', (name) ->
+            socket.get 'user', (err, user) ->
+                user.setName name
+                group.notify user.getName()
+
+        # join group
+        socket.on 'join group', (groupName) ->
+            socket.get 'user', (err, user) ->
+                group = roomManager.joinGroup groupName, user
+                group.notify user.getName()
+
+        # set timer end time
+        socket.on 'set timer', (endTime) ->
+            socket.get 'user', (err, user) ->
+                group = roomManager.getGroup[user]
+                group.notify user.getName()
+
 
 # start the app server
-io.sockets.on 'connection', pushHandler
+server = http.createServer handler
+io = socketio.listen server
+io.sockets.on 'connection', pushHandlerFactory(new RoomManager)
 server.listen 8000
