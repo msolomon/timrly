@@ -58,7 +58,7 @@ class Group
         }
 
     setEndTime: (endTime, expectedDelay = 500) ->
-        @endTime = endTime + 500
+        @endTime = endTime + expectedDelay
 
 
 class RoomManager

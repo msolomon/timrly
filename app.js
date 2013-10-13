@@ -124,7 +124,7 @@
       if (expectedDelay == null) {
         expectedDelay = 500;
       }
-      return this.endTime = endTime + 500;
+      return this.endTime = endTime + expectedDelay;
     };
 
     return Group;
