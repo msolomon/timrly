@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<head>
+    <link rel="stylesheet" type="text/css" href="timrly.css">
+</head>
+<body>
+    <div id="timer">
+        <span id="timeDisplay">0:00<span>
+    </div>
+    <div id="timerOptions">
+        <select id="time" onchange="">
+            <option value=5>5 seconds</option>
+            <option value=10>10 seconds</option>
+            <option value=30>30 seconds</option>
+            <option value=60 selected>1 minute</option>
+            <option value=90>1.5 minutes</option>
+            <option value=120>2 minutes</option>
+            <option value=0>custom</option>
+        </select>
+        <input type="number" id="customTime" min=1 value=60 />
+        <button id="start">Start</button>
+
+    </div>
+    <div id="audio">
+        <label>
+            <input id="soundOn" type="checkbox" checked>
+            Play sound when timer finishes
+        </label>
+        <audio id="endSound" src="30247_streety_sword5.ogg" muted>
+        </audio>
+    </div>
+    <div id="name">
+        <label>
+            Username:
+            <input id="username" type="text">
+        </label>
+    </div>
+    <div id="group">
+        <label>
+            Group name:
+            <input id="groupName" type="text">
+        </label>
+        <br>
+        <h4>Group members</h4>
+        <div id="members">
+        </div>
+    </div>
+    <script src="socket.io/socket.io.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js"></script>
+    <script src="http://code.createjs.com/soundjs-0.5.0.min.js"></script>
+    <script src="timrly.js"></script>
+</body>

@@ -1,33 +1,19 @@
 # Mike Solomon
 # 9 Oct 2013
-# timrly.js
+# timrly
 # the only shared timer with a web 2.0 name
 
 http = require 'http'
 socketio = require 'socket.io'
+fs = require 'fs'
 
 handler = (req, res) ->
-    res.end "<script src='socket.io/socket.io.js'></script>\
-            <script>
-            var socket = io.connect('http://localhost:8000');
-            socket.on('notification', function(data) {
-                console.log(data);
-            });
-            socket.on('nickname set', function(data) {
-                console.log(data);
-            });
-            socket.on('update', function(data) {
-                console.log('update', data);
-            });
-            socket.on('group joined', function(data) {
-                console.log(data);
-            });
-            socket.emit('set nickname', 'joe');
-            socket.emit('set nickname', 'chet');
-            socket.emit('set nickname', 'chet');
-            socket.emit('join group', 'g1');
-            socket.emit('join group', 'g2');
-            </script>"
+    res.writeHead 200, {'Content-Type': 'text/html'}
+    console.log 'stuff', req.url
+    # this is massively insecure. please don't run this anywhere
+    path = '.' + req.url
+    if path == './' then path = 'client.html'
+    res.end fs.readFileSync path
 
 uniqueId = (length=5) ->
     id = ""
@@ -61,19 +47,18 @@ class Group
 
     notify: (user) ->
         'Update all clients with full state update'
-        info = @info(user)
-        user.message 'update', info for user in @users
+        u.message 'update', @info(u) for u in @users
 
     info: (user) ->
         {
             group: @name,
-            user: user,
+            user: user.getName(),
             users: (u.getName() for u in @users),
             end_time: @endTime
         }
 
-    setEndTime: (endTime) ->
-        @endTime = endTime
+    setEndTime: (endTime, expectedDelay = 500) ->
+        @endTime = endTime + 500
 
 
 class RoomManager
@@ -81,11 +66,15 @@ class RoomManager
         @groups = {}
         @usersToGroups = {}
 
-    joinGroup: (groupName, user) ->
-        'Leave previous group, if any, and join a new one'
+    leaveGroup: (user) ->
         old_group = @usersToGroups[user]
         if old_group?
             old_group.leave user
+            old_group.notify()
+
+    joinGroup: (groupName, user) ->
+        'Leave previous group, if any, and join a new one'
+        @leaveGroup user
 
         group = @groups[groupName] ? @groups[groupName] = new Group(groupName)
         group.join user
@@ -96,34 +85,47 @@ class RoomManager
         @usersToGroups[user]
 
 
-pushHandlerFactory = (roomManager) ->
-    pushHandler = (socket) ->
+connectHandlerFactory = (roomManager) ->
+    connectHandler = (socket) ->
         user = new User(socket)
         socket.set 'user', user
         group = roomManager.joinGroup uniqueId(), user
-        group.notify user.getName()
+        group.notify()
 
         # set nickname
         socket.on 'set nickname', (name) ->
             socket.get 'user', (err, user) ->
                 user.setName name
-                group.notify user.getName()
+                group = roomManager.getGroup user
+                group.notify()
 
         # join group
         socket.on 'join group', (groupName) ->
             socket.get 'user', (err, user) ->
                 group = roomManager.joinGroup groupName, user
-                group.notify user.getName()
+                group.notify()
+
+        socket.on 'leave group', () ->
+            socket.get 'user', (err, user) ->
+                roomManager.leaveGroup user
+                group.notify()
 
         # set timer end time
         socket.on 'set timer', (endTime) ->
             socket.get 'user', (err, user) ->
-                group = roomManager.getGroup[user]
-                group.notify user.getName()
+                group = roomManager.getGroup user
+                group.setEndTime endTime
+                group.notify()
 
+disconnectHandlerFactory = (roomManager) ->
+    disconnectHandlerFactory = (socket) ->
+        socket.get 'user', (err, user) ->
+            roomManager.leaveGroup user
 
 # start the app server
 server = http.createServer handler
 io = socketio.listen server
-io.sockets.on 'connection', pushHandlerFactory(new RoomManager)
+roomManager = new RoomManager
+io.sockets.on 'connection', connectHandlerFactory(roomManager)
+io.sockets.on 'disconnect', disconnectHandlerFactory(roomManager)
 server.listen 8000
