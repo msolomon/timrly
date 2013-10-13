@@ -1,3 +1,7 @@
+# Mike Solomon
+# 9 Oct 2013
+# timrly
+# the only shared egg timer with a web 2.0 name
 
 socket = io.connect 'http://localhost:8000'
 

@@ -1,7 +1,7 @@
 # Mike Solomon
 # 9 Oct 2013
 # timrly
-# the only shared timer with a web 2.0 name
+# the only shared egg timer with a web 2.0 name
 
 http = require 'http'
 socketio = require 'socket.io'
