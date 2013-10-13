@@ -43,7 +43,7 @@ startTimer = (endTime) ->
                 timeDisplay.text = display_text
             , 180
             milliseconds_left = 0
-            if $('#soundOn').val()
+            if $('#soundOn')[0].checked
                 createjs.Sound.play 'endSound'
         time.setMilliseconds milliseconds_left
         timeString = timeToString time
