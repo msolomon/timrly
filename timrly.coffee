@@ -91,9 +91,3 @@ $(document).ready (event) ->
     groupName = localStorage['groupName']
     if groupName?
         socket.emit 'join group', groupName
-
-# socket.emit 'set nickname', 'joe'
-# socket.emit 'set nickname', 'chet'
-# socket.emit 'set nickname', 'chet'
-# socket.emit 'join group', 'g1'
-# socket.emit 'join group', 'g2'
