@@ -46,7 +46,7 @@ startTimer = (endTime) ->
                     display_text = empty_text
                 document.title = display_text
                 timeDisplay.text = display_text
-            , 180
+            , 990
             milliseconds_left = 0
             if $('#soundOn')[0].checked
                 console.log 'playing sound'
