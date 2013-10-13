@@ -2,7 +2,7 @@
 (function() {
   var iChanged, socket, startTimer, timeToString, timer;
 
-  socket = io.connect('http://localhost:8000');
+  socket = io.connect('/');
 
   createjs.Sound.registerSound($('#endSound')[0]);
 

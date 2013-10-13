@@ -3,7 +3,7 @@
 # timrly
 # the only shared egg timer with a web 2.0 name
 
-socket = io.connect 'http://localhost:8000'
+socket = io.connect '/'
 
 createjs.Sound.registerSound $('#endSound')[0]
 
