@@ -27,12 +27,14 @@ startTimer = (endTime) ->
     empty_text = "00:00"
     clearInterval timer
     if not endTime?
+        console.log 'timer stopped'
         timeDisplay.text empty_text
         return
     timer = setInterval () ->
         time = new Date(null)
         milliseconds_left = endTime - new Date().getTime()
         if milliseconds_left <= 0
+            console.log 'timer has expired'
             clearInterval timer
             timer = setInterval () ->
                 if document.title == empty_text
@@ -44,6 +46,7 @@ startTimer = (endTime) ->
             , 180
             milliseconds_left = 0
             if $('#soundOn')[0].checked
+                console.log 'playing sound'
                 createjs.Sound.play 'endSound'
         time.setMilliseconds milliseconds_left
         timeString = timeToString time
@@ -54,12 +57,12 @@ startTimer = (endTime) ->
 
 iChanged = () ->
     length = parseInt $('#time').val()
-    console.log length
     if length == 0
         length = parseInt $('#customTime').val()
     length *= 1000
     now = new Date().getTime()
-    socket.emit('set timer', now + length)
+    console.log 'set timer', now + length
+    socket.emit 'set timer', now + length
 
 $(document).keypress (event) ->
     if event.keyCode == 13 # enter
@@ -75,19 +78,23 @@ $('#customTime').change (event) ->
     $('#time option').last().prop('selected', true)
 
 $('#username').change (event) ->
+    console.log 'set nickname', event.target.value
     socket.emit 'set nickname', event.target.value
 
 $('#groupName').change (event) ->
+    console.log 'join group', event.target.value
     socket.emit 'join group', event.target.value
 
 $(window).unload (event) ->
+    console.log 'leave group'
     socket.emit 'leave group'
 
 $(document).ready (event) ->
     username = localStorage['username']
     if username?
-        console.log 'setting nick', username
+        console.log 'from localStorage', 'set nickname', username
         socket.emit 'set nickname', username
     groupName = localStorage['groupName']
     if groupName?
+        console.log 'from localStorage', 'join group', groupName
         socket.emit 'join group', groupName

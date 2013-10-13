@@ -43,6 +43,7 @@
     empty_text = "00:00";
     clearInterval(timer);
     if (endTime == null) {
+      console.log('timer stopped');
       timeDisplay.text(empty_text);
       return;
     }
@@ -52,6 +53,7 @@
       time = new Date(null);
       milliseconds_left = endTime - new Date().getTime();
       if (milliseconds_left <= 0) {
+        console.log('timer has expired');
         clearInterval(timer);
         timer = setInterval(function() {
           var display_text;
@@ -66,6 +68,7 @@
         }, 180);
         milliseconds_left = 0;
         if ($('#soundOn')[0].checked) {
+          console.log('playing sound');
           createjs.Sound.play('endSound');
         }
       }
@@ -80,12 +83,12 @@
     var length, now;
 
     length = parseInt($('#time').val());
-    console.log(length);
     if (length === 0) {
       length = parseInt($('#customTime').val());
     }
     length *= 1000;
     now = new Date().getTime();
+    console.log('set timer', now + length);
     return socket.emit('set timer', now + length);
   };
 
@@ -108,14 +111,17 @@
   });
 
   $('#username').change(function(event) {
+    console.log('set nickname', event.target.value);
     return socket.emit('set nickname', event.target.value);
   });
 
   $('#groupName').change(function(event) {
+    console.log('join group', event.target.value);
     return socket.emit('join group', event.target.value);
   });
 
   $(window).unload(function(event) {
+    console.log('leave group');
     return socket.emit('leave group');
   });
 
@@ -124,11 +130,12 @@
 
     username = localStorage['username'];
     if (username != null) {
-      console.log('setting nick', username);
+      console.log('from localStorage', 'set nickname', username);
       socket.emit('set nickname', username);
     }
     groupName = localStorage['groupName'];
     if (groupName != null) {
+      console.log('from localStorage', 'join group', groupName);
       return socket.emit('join group', groupName);
     }
   });
