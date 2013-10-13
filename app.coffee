@@ -128,4 +128,4 @@ io = socketio.listen server
 roomManager = new RoomManager
 io.sockets.on 'connection', connectHandlerFactory(roomManager)
 io.sockets.on 'disconnect', disconnectHandlerFactory(roomManager)
-server.listen 80
+server.listen process.env.PORT || 5000

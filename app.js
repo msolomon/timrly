@@ -223,6 +223,6 @@
 
   io.sockets.on('disconnect', disconnectHandlerFactory(roomManager));
 
-  server.listen(80);
+  server.listen(process.env.PORT || 5000);
 
 }).call(this);
