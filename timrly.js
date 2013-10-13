@@ -47,6 +47,10 @@
       timeDisplay.text(empty_text);
       return;
     }
+    if (endTime < new Date().getTime()) {
+      console.log('timer has already expired');
+      return;
+    }
     return timer = setInterval(function() {
       var milliseconds_left, time, timeString;
 

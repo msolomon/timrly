@@ -30,6 +30,9 @@ startTimer = (endTime) ->
         console.log 'timer stopped'
         timeDisplay.text empty_text
         return
+    if endTime < new Date().getTime()
+        console.log 'timer has already expired'
+        return
     timer = setInterval () ->
         time = new Date(null)
         milliseconds_left = endTime - new Date().getTime()
